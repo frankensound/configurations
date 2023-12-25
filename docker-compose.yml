@@ -1,0 +1,124 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.8-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    ports:
+      - "15672:15672"
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  songs:
+    build:
+      context: ../backend/microservices/songs
+      dockerfile: ./Dockerfile
+    ports:
+      - "${SONGS_PORT}:${SONGS_PORT}"
+    depends_on:
+      rabbitmq:
+         condition: service_healthy
+      songsdb:
+        condition: service_started
+    restart: on-failure
+    environment:
+      DB_URL: ${SONGS_DB_URL}
+      DB_USER: ${SONGS_DB_USER}
+      DB_PASSWORD: ${SONGS_DB_PASS}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASS}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+
+  frontend:
+    build:
+      context: ../frontend/client/
+      dockerfile: ./Dockerfile
+    environment:
+      VITE_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      VITE_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      VITE_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+      VITE_GATEWAY_URL: ${API_GATEWAY_URL}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+
+  history:
+    build:
+      context: ../backend/microservices/history/
+      dockerfile: ./Dockerfile
+    ports:
+      - "${HISTORY_PORT}:${HISTORY_PORT}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      historydb:
+        condition: service_started
+    restart: on-failure
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      HOST: ${HISTORY_HOST}
+      PORT: ${HISTORY_PORT}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      INFLUXDB_URL: ${INFLUXDB_URL}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+
+  gateway:
+    build:
+      context: ../backend/gateway/Gateway
+      dockerfile: ./Dockerfile
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    restart: on-failure
+    environment:
+      - Auth0__Domain=${AUTH0_DOMAIN}
+      - Auth0__Audience=${AUTH0_AUDIENCE}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+
+  accounts:
+    build:
+      context: ../backend/gateway/Accounts
+      dockerfile: ./Dockerfile
+    ports:
+      - "${ACCOUNTS_PORT}:${ACCOUNTS_PORT}"
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - Auth0__Domain=${AUTH0_DOMAIN}
+      - Auth0__ManagementApiAccessToken=${AUTH0_TOKEN}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+
+  historydb:
+    image: influxdb:latest
+    ports:
+      - "${HISTORY_DB_PORT}:${HISTORY_DB_PORT}"
+    volumes:
+      - history_data:/var/lib/influxdb
+
+  songsdb:
+    container_name: songsdb
+    image: postgres
+    ports:
+      - "${SONGS_DB_PORT}:${SONGS_DB_PORT}"
+    volumes:
+      - songs_data:/data/db
+    environment:
+      - POSTGRES_USER=${SONGS_DB_USER}
+      - POSTGRES_PASSWORD=${SONGS_DB_PASS}
+      - POSTGRES_DB=${SONGS_DB_NAME}
+
+volumes:
+  songs_data:
+  history_data:
