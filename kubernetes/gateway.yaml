@@ -41,8 +41,28 @@ metadata:
 spec:
   selector:
     app: gateway
+  type: ClusterIP
   ports:
     - name: http
       port: 80
       targetPort: 5000
       protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+
+spec:
+  ingressClassName: nginx
+  rules:
+  # - host: frankensound.test
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 80
