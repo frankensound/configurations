@@ -98,18 +98,25 @@ git clone git@github.com:frankensound/configurations.git
 3. Run the following commands:
 ```
 minikube start
+# Optional command, if minikube can't find the context
+docker context use default 
 minikube addons enable ingress
 ```
 4. Navigate to the configurations folder, and run:
 ```
-kubectl apply- f .\kubernetes\secrets\
-kubectl apply- f .\kubernetes\
+kubectl apply -f .\kubernetes\secrets\
+kubectl apply -f .\kubernetes\applications\
 ```
-5. Finally, open a new terminal and run:
+5. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
+```
+127.0.0.1 frankensound.test
+```
+6. Finally, open a new terminal and run:
 ```
 minikube tunnel
 ```
-Now the application should be accessible by navigating to localhost.
+Now the application should be accessible by navigating to ```http://frankensound.test```.  
+Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://localhost```.
 ### Docker Desktop
 1. Clone the repository
 ```
@@ -121,14 +128,59 @@ git clone git@github.com:frankensound/configurations.git
 ```
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
 ```
-5. Uncomment the ```host: frankensound.test``` property in the ```gateway.yaml``` deployment
-6. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
+5. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
 ```
 127.0.0.1 frankensound.test
 ```
-7. Navigate to the configurations folder, and run:
+6. Navigate to the configurations folder, and run:
 ```
-kubectl apply- f .\kubernetes\secrets\
-kubectl apply- f .\kubernetes\
+kubectl apply -f .\kubernetes\secrets\
+kubectl apply -f .\kubernetes\applications\
 ```
-Now the application should be accessible by navigating to frankensound.test.
+Now the application should be accessible by navigating to ```http://frankensound.test```.  
+Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://kubernetes.docker.internal```.
+
+## *Metrics
+To enable monitoring with Prometheus and Grafana, follow the steps below.  
+First, install Helm if it is not already on your system. I am using the ```Chocolatey``` package manager.
+```
+choco install Kubernetes-helm
+```
+### Prometheus setup
+1. Download the Prometheus Helm chart:
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+2. Install the Prometheus Helm chart on the cluster:
+```
+helm install prometheus prometheus-community/prometheus
+```
+3. Expose the service:
+```
+kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-ext
+minikube service prometheus-server-ext
+```
+### Grafana setup
+1. Download the Grafana Helm chart:
+```
+helm repo add grafana https://grafana.github.io/helm-charts 
+helm repo update
+```
+2. Install the Prometheus Helm chart on the cluster:
+```
+helm install grafana grafana/grafana
+```
+3. Expose the service:
+```
+kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-ext
+minikube service grafana-ext
+```
+4. Get the password for the Grafana ```admin```, then use it to login into the dashboard:
+```
+kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+```
+
+5. Add Prometheus as the data source in the UI. Then, add the internal cluster URL where the Prometheus application is running. Then, click on ```Save & Test```.
+6. Import a dashboard from ```grafana.com``` and use the Prometheus data source we created.
+Now monitoring should be setup locally for the cluster.

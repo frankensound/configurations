@@ -56,8 +56,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  # - host: frankensound.test
-    - http:
+    - host: frankensound.test
+      http:
         paths:
           - path: /
             pathType: Prefix
