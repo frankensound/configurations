@@ -33,18 +33,31 @@ spec:
                   key: AUDIENCE
             - name: ASPNETCORE_ENVIRONMENT
               value: "Development"
+            - name: ReverseProxy__Clusters__songs__Destinations__destination__Address
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: songs
+            - name: ReverseProxy__Clusters__accounts__Destinations__destination__Address
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: accounts
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: gateway
+  name: gateway-service
+  labels:
+    job: gateway-job
+    app: gateway-service
 spec:
   selector:
     app: gateway
   type: ClusterIP
   ports:
     - name: http
-      port: 80
+      port: 5000
       targetPort: 5000
       protocol: TCP
 ---
@@ -63,6 +76,23 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: gateway
+                name: gateway-service
                 port:
-                  number: 80
+                  number: 5000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: gateway-monitor
+  labels:
+    release: prometheus
+    app: prometheus
+spec:
+  jobLabel: job
+  endpoints:
+    - interval: 30s
+      port: http
+      path: /metrics
+  selector:
+    matchLabels:
+      app: gateway-service

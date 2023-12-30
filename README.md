@@ -105,7 +105,7 @@ minikube addons enable ingress
 4. Navigate to the configurations folder, and run:
 ```
 kubectl apply -f .\kubernetes\secrets\
-kubectl apply -f .\kubernetes\applications\
+kubectl apply -f .\kubernetes\
 ```
 5. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
 ```
@@ -135,52 +135,44 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 6. Navigate to the configurations folder, and run:
 ```
 kubectl apply -f .\kubernetes\secrets\
-kubectl apply -f .\kubernetes\applications\
+kubectl apply -f .\kubernetes\
 ```
 Now the application should be accessible by navigating to ```http://frankensound.test```.  
 Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://kubernetes.docker.internal```.
 
-## *Metrics
+## Monitoring
 To enable monitoring with Prometheus and Grafana, follow the steps below.  
 First, install Helm if it is not already on your system. I am using the ```Chocolatey``` package manager.
 ```
 choco install Kubernetes-helm
 ```
-### Prometheus setup
-1. Download the Prometheus Helm chart:
+### Setup
+
+1. Download the Helm repository containing the kube-prometheus stack. This also comes with Grafana out-of-the-box.
 ```
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+```
+2. Update the repository:
+```
 helm repo update
 ```
-2. Install the Prometheus Helm chart on the cluster:
+3. Install the chart into the cluster:
 ```
-helm install prometheus prometheus-community/prometheus
+helm install prometheus prometheus-community/kube-prometheus-stack
 ```
-3. Expose the service:
-```
-kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-ext
-minikube service prometheus-server-ext
-```
-### Grafana setup
-1. Download the Grafana Helm chart:
-```
-helm repo add grafana https://grafana.github.io/helm-charts 
-helm repo update
-```
-2. Install the Prometheus Helm chart on the cluster:
-```
-helm install grafana grafana/grafana
-```
-3. Expose the service:
-```
-kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-ext
-minikube service grafana-ext
-```
-4. Get the password for the Grafana ```admin```, then use it to login into the dashboard:
-```
-kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-```
+4. Now, it is time to expose the services to access them:
+- For Grafana, execute the following commands:
+  ```
+  kubectl expose service prometheus-grafana --type=NodePort --target-port=3000 --name=grafana-ext
+  minikube service grafana-ext
+  ```
+- For Prometheus, execute the following commands:
+  ```
+  kubectl expose service prometheus-kube-prometheus-prometheus --type=NodePort --target-port=9090 --name=prometheus-server-ext
+  minikube service prometheus-server-ext
+  ```
+5. Login into the Grafana dashboard with the default username ```admin``` and the ```prom-operator``` password.  
+Add Prometheus as the data source in the UI. Then, add the internal cluster URL where the Prometheus application is running. Then, click on ```Save & Test```. 
 
-5. Add Prometheus as the data source in the UI. Then, add the internal cluster URL where the Prometheus application is running. Then, click on ```Save & Test```.
-6. Import a dashboard from ```grafana.com``` and use the Prometheus data source we created.
+6. Import a dashboard from ```grafana.com``` and use the Prometheus data source we created.  
 Now monitoring should be setup locally for the cluster.

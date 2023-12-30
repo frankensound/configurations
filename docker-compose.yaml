@@ -40,7 +40,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend/client/
+      context: ../client/
       dockerfile: ./Dockerfile
     environment:
       VITE_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
@@ -84,7 +84,8 @@ services:
       - Auth0__Domain=${AUTH0_DOMAIN}
       - Auth0__Audience=${AUTH0_AUDIENCE}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-
+      - ReverseProxy__Clusters__songs__Destinations__destination__Address=${SONGS_ADDRESS}
+      - ReverseProxy__Clusters__accounts__Destinations__destination__Address=${ACCOUNTS_ADDRESS}
   accounts:
     build:
       context: ../backend/gateway/Accounts
