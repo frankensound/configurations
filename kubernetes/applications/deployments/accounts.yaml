@@ -32,14 +32,3 @@ spec:
                   key: TOKEN
             - name: ASPNETCORE_ENVIRONMENT
               value: "Development"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: accounts-service
-spec:
-  selector:
-    app: accounts
-  ports:
-    - protocol: TCP
-      port: 5001

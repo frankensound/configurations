@@ -56,15 +56,3 @@ spec:
                 secretKeyRef:
                   name: historydb
                   key: TOKEN
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: history-service
-spec:
-  selector:
-    app: history
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000

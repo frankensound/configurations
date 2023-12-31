@@ -60,14 +60,3 @@ spec:
                 secretKeyRef:
                   name: rabbitmq
                   key: QUEUE
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: songs-service
-spec:
-  selector:
-    app: songs
-  ports:
-    - protocol: TCP
-      port: 8080
