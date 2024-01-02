@@ -36,7 +36,7 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASS}
-      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      RABBITMQ_QUEUE: ${HISTORY_QUEUE}
 
   frontend:
     build:
@@ -67,7 +67,8 @@ services:
       HOST: ${HISTORY_HOST}
       PORT: ${HISTORY_PORT}
       RABBITMQ_URL: ${RABBITMQ_URL}
-      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      HISTORY_QUEUE: ${HISTORY_QUEUE}
+      USER_QUEUE: ${USER_QUEUE}
       INFLUXDB_ORG: ${INFLUXDB_ORG}
       INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
       INFLUXDB_URL: ${INFLUXDB_URL}
@@ -100,6 +101,8 @@ services:
       - Auth0__Domain=${AUTH0_DOMAIN}
       - Auth0__ManagementApiAccessToken=${AUTH0_TOKEN}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - RabbitMQ__HostName=${RABBITMQ_HOST}
+      - RabbitMQ__QueueName=${USER_QUEUE}
 
   historydb:
     image: influxdb:latest

@@ -1,3 +1,4 @@
-**/secrets
-**/.env
-!example.env
+**/secrets/*.yaml
+**/*.env
+# Exception for example files
+!**/*example.env

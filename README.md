@@ -8,7 +8,7 @@ This repository contains the configurations for developing and deploying the mic
     git clone git@github.com:frankensound/configurations.git
     ```
 2. Create an  ``` .env ``` file in the root directory of the repository
-3. Copy and modify the values in the provided ```.env.example``` file. Since we are using Docker Compose to run the containers, the host value will be ```host.docker.internal```.  
+3. Copy and modify the values in the provided ```example.env``` file. Since we are using Docker Compose to run the containers, the host value will be ```host.docker.internal```.  
 
     To supply the Auth0 values, create an account and create a domain for your application.  
     Then, follow tutorials to setup a Machine to Machine application with Auth0 Management API privileges.  
@@ -34,63 +34,8 @@ This repository contains the configurations for developing and deploying the mic
     docker compose up
     ```
 ## Deployment
-First, setup the secrets folder in the kubernetes directory. It should contain the following:
-- A file called ```auth0.yaml```, with the content:
-    ```
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: auth0
-    type: Opaque
+Before starting to follow the steps below, move the files in ```kubernetes/secrets/examples``` into ```kubernetes/secrets``` and populate the keys with your values.
 
-    data:
-      DOMAIN:
-      AUDIENCE:
-      TOKEN:
-    ```
-- A file called ```historydb.yaml```, with the content:
-    ```
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: historydb
-    type: Opaque
-
-    data:
-      ORG:
-      BUCKET:
-      URL:
-      TOKEN:
-    ```
-- A file called ```songsdb.yaml```, with the content:
-    ```
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: songsdb
-    type: Opaque
-
-    data:
-      URL:
-      USERNAME:
-      PASSWORD:
-    ```
-- A file called ```rabbitmq.yaml```, with the content:
-    ```
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: rabbitmq
-    type: Opaque
-
-    data:
-      HOST:
-      PORT:
-      USER:
-      PASSWORD:
-      QUEUE:
-      URL:
-    ```
 Remember to encode the secrets to base64 before proceeding.
 ### Minikube
 1. Clone the repository

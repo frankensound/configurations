@@ -32,3 +32,13 @@ spec:
                   key: TOKEN
             - name: ASPNETCORE_ENVIRONMENT
               value: "Development"
+            - name: RabbitMQ__HostName
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: HOST
+            - name: RabbitMQ__QueueName
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: USER_QUEUE

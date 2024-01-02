@@ -31,11 +31,16 @@ spec:
                 secretKeyRef:
                   name: rabbitmq
                   key: URL
-            - name: RABBITMQ_QUEUE
+            - name: HISTORY_QUEUE
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
-                  key: QUEUE
+                  key: HISTORY_QUEUE
+            - name: USER_QUEUE
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: USER_QUEUE
             - name: INFLUXDB_ORG
               valueFrom:
                 secretKeyRef:
