@@ -1,6 +1,7 @@
 # Configurations
 
-This repository contains the configurations for developing and deploying the microservices-based application Frankensound, as a whole, on a local environment. Follow the instructions below to setup:
+This repository contains the configurations for developing and deploying the microservices-based application Frankensound.  
+Follow the instructions below to setup:
 
 ## Development
 1. Clone the repository
@@ -34,10 +35,11 @@ This repository contains the configurations for developing and deploying the mic
     docker compose up
     ```
 ## Deployment
+### Local
 Before starting to follow the steps below, move the files in ```kubernetes/secrets/examples``` into ```kubernetes/secrets``` and populate the keys with your values.
 
 Remember to encode the secrets to base64 before proceeding.
-### Minikube
+#### Minikube
 1. Clone the repository
     ```
     git clone git@github.com:frankensound/configurations.git
@@ -70,7 +72,7 @@ Now the application should be accessible by navigating to ```http://frankensound
 Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://localhost```.  
 
 You can always visualise the deployments by running ```minikube dashboard``` in a new terminal.
-### Docker Desktop
+#### Docker Desktop
 1. Clone the repository
     ```
     git clone git@github.com:frankensound/configurations.git
@@ -96,6 +98,34 @@ You can always visualise the deployments by running ```minikube dashboard``` in 
 Now the application should be accessible by navigating to ```http://frankensound.test```.  
 Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://kubernetes.docker.internal```.
 
+### Cloud
+Using Terraform and the Azure CLI.
+1. First, login using ```az login``` command in your terminal of choice.
+2. Set the current subscription to the subscription that you want to use by running:
+```
+az account set --subscription <id>
+```
+3. Then create a service principal with ```owner``` rights:
+```
+az ad sp create-for-rbac --name "<name>" --role owner --scopes /subscriptions/<id> --sdk-auth
+```
+4. Set the following environment variables into the Terraform Cloud workspace: ```ARM_CLIENT_ID```, ```ARM_CLIENT_SECRET```, ```ARM_CLIENT_SECRET```, ```ARM_SUBSCRIPTION_ID```, ```ARM_TENANT_ID``` as sensitive environment variables.
+5. Initialize Terraform and apply:
+```
+terraform init    # Initialize Terraform
+terraform plan    # Review the plan
+terraform apply   # Apply the configuration
+```
+6. Change the kubeconfig to point to the cluster by running:
+```
+az aks get-credentials --resource-group frankengroup --name dev-frankencluster
+```
+Now you can access the cluster by running ```kubectl get nodes```.  
+
+To destroy the resources, run:
+```
+terraform destroy
+```
 ## Monitoring
 To enable monitoring with Prometheus and Grafana, follow the steps below. First, install Helm if it is not already on your system. I am using the ```Chocolatey``` package manager:
 ```
