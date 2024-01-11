@@ -99,33 +99,48 @@ Now the application should be accessible by navigating to ```http://frankensound
 Alternatively, you can leave out the host name configuration, and the application will be accessible at ```http://kubernetes.docker.internal```.
 
 ### Cloud
-Using Terraform and the Azure CLI.
+Using Terraform and the Azure CLI, as well as services from AWS and MongoDB.
 1. First, login using ```az login``` command in your terminal of choice.
 2. Set the current subscription to the subscription that you want to use by running:
-```
-az account set --subscription <id>
-```
+    ```
+    az account set --subscription <id>
+    ```
 3. Then create a service principal with ```owner``` rights:
-```
-az ad sp create-for-rbac --name "<name>" --role owner --scopes /subscriptions/<id> --sdk-auth
-```
-4. Set the following environment variables into the Terraform Cloud workspace: ```ARM_CLIENT_ID```, ```ARM_CLIENT_SECRET```, ```ARM_CLIENT_SECRET```, ```ARM_SUBSCRIPTION_ID```, ```ARM_TENANT_ID``` as sensitive environment variables.
+    ```
+    az ad sp create-for-rbac --name "<name>" --role owner --scopes /subscriptions/<id> --sdk-auth
+    ```
+4. Set the following environment variables into the Terraform Cloud workspace as sensitive environment variables: 
+- For Azure:
+    - ```ARM_CLIENT_ID```
+    - ```ARM_CLIENT_SECRET```
+    - ```ARM_CLIENT_SECRET```
+    - ```ARM_SUBSCRIPTION_ID```
+    - ```ARM_TENANT_ID```
+- For AWS:
+    - For the Aurora PostgreSQL database, add ```TF_VAR_master_password```
+    - For RabbitMQ:
+        - ```TF_VAR_username```
+        - ```TF_VAR_password```
+- For MongoDB Atlas:
+    - ```MONGODB_ATLAS_PUBLIC_KEY```
+    - ```MONGODB_ATLAS_PRIVATE_KEY```
+    - ```mongodb_org_id``` as a Terraform variable instead of an environmental variable
 5. Initialize Terraform and apply:
-```
-terraform init    # Initialize Terraform
-terraform plan    # Review the plan
-terraform apply   # Apply the configuration
-```
+    ```
+    terraform init    # Initialize Terraform
+    terraform plan    # Review the plan
+    terraform apply   # Apply the configuration
+    ```
 6. Change the kubeconfig to point to the cluster by running:
-```
-az aks get-credentials --resource-group frankengroup --name dev-frankencluster
-```
+    ```
+    az aks get-credentials --resource-group frankengroup --name dev-frankencluster
+    ```
 Now you can access the cluster by running ```kubectl get nodes```.  
 
 To destroy the resources, run:
-```
-terraform destroy
-```
+    ```
+    terraform destroy
+    ```
 ## Monitoring
 To enable monitoring with Prometheus and Grafana, follow the steps below. First, install Helm if it is not already on your system. I am using the ```Chocolatey``` package manager:
 ```
