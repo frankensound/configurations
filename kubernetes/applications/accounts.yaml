@@ -17,6 +17,7 @@ spec:
       containers:
         - name: accounts
           image: marinastancu/accounts:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           env:
@@ -31,14 +32,44 @@ spec:
                   name: auth0
                   key: TOKEN
             - name: ASPNETCORE_ENVIRONMENT
-              value: "Development"
+              value: "Release"
             - name: RabbitMQ__HostName
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
                   key: HOST
-            - name: RabbitMQ__QueueName
+            - name: RabbitMQ__QueueName__Data
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
-                  key: USER_QUEUE
+                  key: EVENTS_QUEUE
+            - name: RabbitMQ__QueueName__Deletion
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: DELETION_QUEUE
+            - name: MongoDB__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: CONNECTION_STRING
+            - name: MongoDB__DatabaseName
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb
+                  key: NAME
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: accounts-service
+  labels:
+    job: accounts-job
+    app: accounts
+spec:
+  selector:
+    app: accounts
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5001

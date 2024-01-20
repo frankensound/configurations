@@ -18,6 +18,7 @@ spec:
       containers:
         - name: gateway
           image: marinastancu/gateway:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
@@ -32,7 +33,7 @@ spec:
                   name: auth0
                   key: AUDIENCE
             - name: ASPNETCORE_ENVIRONMENT
-              value: "Development"
+              value: "Release"
             - name: ReverseProxy__Clusters__songs__Destinations__destination__Address
               valueFrom:
                 configMapKeyRef:
@@ -43,3 +44,20 @@ spec:
                 configMapKeyRef:
                   name: configmap
                   key: accounts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    job: gateway-job
+    app: gateway
+spec:
+  selector:
+    app: gateway
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      protocol: TCP

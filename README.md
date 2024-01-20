@@ -56,8 +56,6 @@ Remember to encode the secrets to base64 before proceeding.
     ```
     kubectl apply -f .\secrets\
     kubectl apply -f .\applications\
-    kubectl apply -f .\applications\deployments\
-    kubectl apply -f .\applications\services\
     kubectl apply -f .\applications\ingress\
     ```
 5. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
@@ -91,8 +89,6 @@ You can always visualise the deployments by running ```minikube dashboard``` in 
     ```
     kubectl apply -f .\secrets\
     kubectl apply -f .\applications\
-    kubectl apply -f .\applications\deployments\
-    kubectl apply -f .\applications\services\
     kubectl apply -f .\applications\ingress\
     ```
 Now the application should be accessible by navigating to ```http://frankensound.test```.  
@@ -137,10 +133,7 @@ Using Terraform and the Azure CLI, as well as services from AWS and MongoDB.
     ```
 Now you can access the cluster by running ```kubectl get nodes```.  
 
-To destroy the resources, run:
-    ```
-    terraform destroy
-    ```
+To destroy the resources, run: ```terraform destroy```.
 ## Monitoring
 To enable monitoring with Prometheus and Grafana, follow the steps below. First, install Helm if it is not already on your system. I am using the ```Chocolatey``` package manager:
 ```
@@ -180,5 +173,36 @@ Then, follow the steps below:
 Then, add the internal cluster URL where the Prometheus application is running: 
 ```http://prometheus-kube-prometheus-prometheus.default.svc.cluster.local:9090``` and click on ```Save & Test```. 
 
-9. Import a dashboard from ```grafana.com``` and use the Prometheus data source we created, or create a dashboard from scratch.  
+9. Import a dashboard from ```grafana.com``` and use the Prometheus data source we created, or create a dashboard from scratch. To create a dashboard from scratch, use these metrics:
+    - CPU usage per service @ Kubernetes Service-level
+        ```
+        sum(rate(container_cpu_usage_seconds_total{namespace="default", pod=~"$application-.*"}[1h]))
+        ```
+    - RAM usage per service @ Kubernetes Service-level
+        ```
+        sum(rate(container_memory_usage_bytes{namespace="default", pod=~"$application-.*"}[1h]))
+        ```
+    - Availability (uptime)
+        ```
+        (
+        sum(avg_over_time(kube_pod_status_ready{namespace="default", pod=~"$application-.*", condition="true"}[1m])) 
+        / 
+        sum(avg_over_time(kube_pod_status_ready{namespace="default", pod=~"$application-.*"}[1m]))
+        ) * 100
+        ```
+    - Crash/restart events @ Kubernetes Service-level
+        ```
+        sum(kube_pod_container_status_restarts_total{namespace="default", pod=~"$application-.*"})
+        ```
+    - Application Response Time (latency [ms] lower is better) @ Application-level
+        ```
+        sum(rate(request_duration_milliseconds_sum{service="$application"}[1h]))
+        /
+        sum(rate(request_duration_milliseconds_count{service="$application"}[1h]))
+        ```
+    - Peak Response Time (latency [ms], jitter[ms] lower is better) @ Application-level
+        ```
+        histogram_quantile(0.99, sum(rate(request_duration_milliseconds_bucket{service="$application"}[5m])) by (le))
+        ```
+
 Now monitoring should be setup locally for the cluster.

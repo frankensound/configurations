@@ -15,8 +15,8 @@ terraform {
     hostname = "app.terraform.io"
 
     workspaces {
-      name = "main"
-      project = "deployment"
+      name = "aws"
+      project = "infrastructure"
     }
   }
 }

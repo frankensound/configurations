@@ -1,20 +1,20 @@
 version: "3.9"
 
 services:
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3.8-management-alpine
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
-    ports:
-      - "15672:15672"
-      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
-    healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # rabbitmq:
+  #   container_name: rabbitmq
+  #   image: rabbitmq:3.8-management-alpine
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+  #     - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+  #   ports:
+  #     - "15672:15672"
+  #     - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
 
   songs:
     build:
@@ -22,11 +22,11 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - "${SONGS_PORT}:${SONGS_PORT}"
-    depends_on:
-      rabbitmq:
-         condition: service_healthy
-      songsdb:
-        condition: service_started
+    # depends_on:
+    #   rabbitmq:
+    #      condition: service_healthy
+    #   songsdb:
+    #     condition: service_started
     restart: on-failure
     environment:
       DB_URL: ${SONGS_DB_URL}
@@ -36,7 +36,13 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASS}
-      RABBITMQ_QUEUE: ${HISTORY_QUEUE}
+      HISTORY_QUEUE: ${HISTORY_QUEUE}
+      DELETION_QUEUE: ${DELETION_QUEUE}
+      EVENTS_QUEUE: ${EVENTS_QUEUE}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      REGION: ${REGION}
+      BUCKET_NAME: ${BUCKET_NAME}
 
   frontend:
     build:
@@ -56,11 +62,11 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - "${HISTORY_PORT}:${HISTORY_PORT}"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      historydb:
-        condition: service_started
+    # depends_on:
+    #   rabbitmq:
+    #     condition: service_healthy
+    #   historydb:
+    #     condition: service_started
     restart: on-failure
     environment:
       NODE_ENV: ${NODE_ENV}
@@ -68,7 +74,8 @@ services:
       PORT: ${HISTORY_PORT}
       RABBITMQ_URL: ${RABBITMQ_URL}
       HISTORY_QUEUE: ${HISTORY_QUEUE}
-      USER_QUEUE: ${USER_QUEUE}
+      DELETION_QUEUE: ${DELETION_QUEUE}
+      EVENTS_QUEUE: ${EVENTS_QUEUE}
       INFLUXDB_ORG: ${INFLUXDB_ORG}
       INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
       INFLUXDB_URL: ${INFLUXDB_URL}
@@ -86,6 +93,7 @@ services:
       - Auth0__Audience=${AUTH0_AUDIENCE}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ReverseProxy__Clusters__songs__Destinations__destination__Address=${SONGS_ADDRESS}
+      - ReverseProxy__Clusters__history__Destinations__destination__Address=${HISTORY_ADDRESS}
       - ReverseProxy__Clusters__accounts__Destinations__destination__Address=${ACCOUNTS_ADDRESS}
   accounts:
     build:
@@ -94,35 +102,53 @@ services:
     ports:
       - "${ACCOUNTS_PORT}:${ACCOUNTS_PORT}"
     restart: on-failure
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+    # depends_on:
+    #   rabbitmq:
+    #     condition: service_healthy
     environment:
       - Auth0__Domain=${AUTH0_DOMAIN}
       - Auth0__ManagementApiAccessToken=${AUTH0_TOKEN}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - RabbitMQ__HostName=${RABBITMQ_HOST}
-      - RabbitMQ__QueueName=${USER_QUEUE}
+      - RabbitMQ__Port=${RABBITMQ_PORT}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASS}
+      - RabbitMQ__QueueName__Data=${EVENTS_QUEUE}
+      - RabbitMQ__QueueName__Deletion=${DELETION_QUEUE}
+      - MongoDB__ConnectionString=${EVENTS_DB_CONNECTION_STRING}
+      - MongoDB__DatabaseName=${EVENTS_DB_NAME}
 
-  historydb:
-    image: influxdb:latest
-    ports:
-      - "${HISTORY_DB_PORT}:${HISTORY_DB_PORT}"
-    volumes:
-      - history_data:/var/lib/influxdb
+#   historydb:
+#     image: influxdb:latest
+#     ports:
+#       - "${HISTORY_DB_PORT}:${HISTORY_DB_PORT}"
+#     volumes:
+#       - history_data:/var/lib/influxdb
 
-  songsdb:
-    container_name: songsdb
-    image: postgres
-    ports:
-      - "${SONGS_DB_PORT}:${SONGS_DB_PORT}"
-    volumes:
-      - songs_data:/data/db
-    environment:
-      - POSTGRES_USER=${SONGS_DB_USER}
-      - POSTGRES_PASSWORD=${SONGS_DB_PASS}
-      - POSTGRES_DB=${SONGS_DB_NAME}
+#   songsdb:
+#     container_name: songsdb
+#     image: postgres
+#     ports:
+#       - "${SONGS_DB_PORT}:${SONGS_DB_PORT}"
+#     volumes:
+#       - songs_data:/data/db
+#     environment:
+#       - POSTGRES_USER=${SONGS_DB_USER}
+#       - POSTGRES_PASSWORD=${SONGS_DB_PASS}
+#       - POSTGRES_DB=${SONGS_DB_NAME}
 
-volumes:
-  songs_data:
-  history_data:
+#   profiledb:
+#     image: mongo:latest
+#     container_name: mongodb
+#     ports:
+#       - "27017:27017"
+#     environment:
+#       - MONGO_INITDB_ROOT_USERNAME=${EVENTS_DB_USER}
+#       - MONGO_INITDB_ROOT_PASSWORD=${EVENTS_DB_PASSWORD}
+#     volumes:
+#       - mongodb_data:/data/db
+
+# volumes:
+#   songs_data:
+#   history_data:
+#   mongodb_data:

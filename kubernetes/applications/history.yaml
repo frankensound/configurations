@@ -17,6 +17,7 @@ spec:
       containers:
         - name: history
           image: marinastancu/history:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
@@ -36,11 +37,16 @@ spec:
                 secretKeyRef:
                   name: rabbitmq
                   key: HISTORY_QUEUE
-            - name: USER_QUEUE
+            - name: DELETION_QUEUE
               valueFrom:
                 secretKeyRef:
                   name: rabbitmq
-                  key: USER_QUEUE
+                  key: DELETION_QUEUE
+            - name: EVENTS_QUEUE
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: EVENTS_QUEUE
             - name: INFLUXDB_ORG
               valueFrom:
                 secretKeyRef:
@@ -61,3 +67,18 @@ spec:
                 secretKeyRef:
                   name: historydb
                   key: TOKEN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: history-service
+  labels:
+    job: history-job
+    app: history
+spec:
+  selector:
+    app: history
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000

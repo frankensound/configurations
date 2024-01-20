@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: gateway-service
+                name: gateway
                 port:
                   number: 5000
