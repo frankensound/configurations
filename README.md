@@ -51,11 +51,13 @@ Remember to encode the secrets to base64 before proceeding.
     # Optional command, if minikube can't find the context
     docker context use default 
     minikube addons enable ingress
+    minikube addons enable metrics-server
     ```
 4. Navigate to the ```kubernetes``` folder, and run:
     ```
     kubectl apply -f .\secrets\
     kubectl apply -f .\applications\
+    kubectl apply -f .\applications\scaling\
     kubectl apply -f .\applications\ingress\
     ```
 5. On Windows, edit the hosts file under ```C:\Windows\System32\drivers\etc``` and add the following line at the end:
@@ -89,6 +91,7 @@ You can always visualise the deployments by running ```minikube dashboard``` in 
     ```
     kubectl apply -f .\secrets\
     kubectl apply -f .\applications\
+    kubectl apply -f .\applications\scaling\
     kubectl apply -f .\applications\ingress\
     ```
 Now the application should be accessible by navigating to ```http://frankensound.test```.  

@@ -19,6 +19,10 @@ spec:
         - name: gateway
           image: marinastancu/gateway:latest
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
           ports:
             - containerPort: 5000
           env:
@@ -44,6 +48,11 @@ spec:
                 configMapKeyRef:
                   name: configmap
                   key: accounts
+            - name: ReverseProxy__Clusters__history__Destinations__destination__Address
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: history
 ---
 apiVersion: v1
 kind: Service

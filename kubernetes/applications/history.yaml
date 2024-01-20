@@ -18,6 +18,10 @@ spec:
         - name: history
           image: marinastancu/history:latest
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
           ports:
             - containerPort: 3000
           env:

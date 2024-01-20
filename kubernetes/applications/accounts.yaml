@@ -18,6 +18,10 @@ spec:
         - name: accounts
           image: marinastancu/accounts:latest
           imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
           ports:
             - containerPort: 5001
           env:
